@@ -81,7 +81,7 @@ export class AuthService {
   async googleLogin(token: string): Promise<void> {
     const responseText = await this.fetchAndHandle(
       `${this.API_URL}/GoogleLogin`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) }
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ token }) }
     );
     // sessionStorage.setItem('auth_token', responseText);
     sessionStorage.setItem('login_method', 'google');
