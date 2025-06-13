@@ -5,18 +5,17 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { SocialAuthServiceConfig, GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import { environment } from './services/environments/environments';
-// Note: Please install the package first using:
-// npm install @abacritt/angularx-social-login
 
 export const appConfig: ApplicationConfig = {
-  // providers: [
-  //   provideZoneChangeDetection({ eventCoalescing: true }), 
-  //   provideRouter(routes), 
-  //   provideHttpClient(withFetch())],
-
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }), 
-    provideRouter(routes), 
+    provideRouter([
+        {
+        path: 'marquesina',
+        loadComponent: () => import('./features/marquesina/marquesina.component').then(m => m.MarquesinaComponent),
+    },
+    ...routes
+  ]), 
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(),
     ),

@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { MarquesinaComponent } from './features/marquesina/marquesina.component';
 
 declare var particlesJS: any;
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, MarquesinaComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
