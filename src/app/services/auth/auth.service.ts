@@ -38,9 +38,22 @@ export class AuthService {
     const nick = (formData.get('Nick')?.toString() || '').trim();
     const name = formData.get('Name')?.toString().trim();
     const surname1 = formData.get('Surname1')?.toString().trim();
+    const surname2 = formData.get('Surname2')?.toString().trim() || null;
     const email = formData.get('Email')?.toString().trim();
     const password = formData.get('Password')?.toString().trim();
     const password2 = formData.get('Password2')?.toString().trim();
+
+    const imageFile = formData.get('image') as File | null;
+    if (imageFile) {
+      formData.append('ProfileImageFile', imageFile, imageFile.name);
+    }
+
+    const bday = formData.get('Bday')?.toString().trim();
+    const phoneNumber = formData.get('PhoneNumber')?.toString().trim();
+    const about = formData.get('About')?.toString().trim() || null;
+    const location = formData.get('UserLocation')?.toString().trim() || null;
+    const publicProfile = formData.get('PublicProfile')?.toString().trim() || '0';
+
     if (!nick) errors.push('nick: El nombre de usuario es obligatorio.');
     if (nick?.length > 20) errors.push('nick: Máximo 20 caracteres.');
     if (!name) errors.push('nombre: El nombre es obligatorio.');
