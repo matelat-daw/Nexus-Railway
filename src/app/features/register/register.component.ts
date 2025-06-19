@@ -32,7 +32,7 @@ export class RegisterComponent {
     bday: new FormControl<Date | string>(''),
     image: new FormControl<File | null>(null),
     about: new FormControl<string | null>(null),
-    location: new FormControl<string | null>(null),
+    userLocation: new FormControl<string | null>(null),
     publicProfile: new FormControl<string>('0')
   });
 
@@ -41,6 +41,7 @@ export class RegisterComponent {
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
       this.form.patchValue({ image: file });
+	  this.form.get('image')?.updateValueAndValidity();
     }
   }
 
@@ -56,7 +57,15 @@ export class RegisterComponent {
     try {
       const formData = new FormData();
       Object.entries(this.form.value).forEach(([key, value]) => {
-        if (value != null) formData.append(key.charAt(0).toUpperCase() + key.slice(1), value as any);
+        if (value != null) {
+            if (key === 'publicProfile') {
+                formData.append('PublicProfile', '1');
+            } else if (key === 'image' && value instanceof File) {
+            formData.append('ProfileImageFile', value, value.name);
+            } else {
+            formData.append(key.charAt(0).toUpperCase() + key.slice(1), value as any);
+            }
+        }
       });
       await this.authService.register(formData);      
       this.router.navigate(['/login'], { replaceUrl: true });
