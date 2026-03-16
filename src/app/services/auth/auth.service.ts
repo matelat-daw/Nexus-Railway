@@ -5,7 +5,7 @@ import { User } from '../../models/user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   constructor(private authGoogle: SocialAuthService) {}
-  private API_URL = 'https://nexus-astralis.up.railway.app/api/Auth';
+  private API_URL = 'http://localhost:8080/api/Auth';
   private passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}$/;
   private emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -80,38 +80,59 @@ export class AuthService {
     if (email && !this.emailRegex.test(email)) errors.push('email: Formato de email inválido.');
     if (!password) errors.push('password: La contraseña es obligatoria.');
     if (errors.length > 0) this.handleErrors(errors);
-    const responseText = await this.fetchAndHandle(
+    
+    const response = await fetch(
       `${this.API_URL}/Login`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
-      credentials: 'include'
-     }
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }), credentials: 'include' }
     );
-    if (/Confirmado|confirmado/.test(responseText)) this.handleErrors(['global: Email no verificado. Por favor revisa tu correo.']);
-    sessionStorage.setItem('login_method', 'local');
-    this.token.set(responseText);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      this.handleErrors([`global: ${errorData.error || 'Error en login'}`]);
+    }
+    
+    const responseData = await response.json();
+    if (responseData.token) {
+      sessionStorage.setItem('auth_token', responseData.token);
+      sessionStorage.setItem('login_method', 'local');
+      this.token.set(responseData.token);
+    }
   }
 
   async googleLogin(token: string): Promise<void> {
-    const responseText = await this.fetchAndHandle(
+    const response = await fetch(
       `${this.API_URL}/GoogleLogin`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ token }) }
     );
-    // sessionStorage.setItem('auth_token', responseText);
-    sessionStorage.setItem('login_method', 'google');
-    this.token.set(responseText);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error en Google login');
+    }
+    
+    const responseData = await response.json();
+    if (responseData.token) {
+      sessionStorage.setItem('auth_token', responseData.token);
+      sessionStorage.setItem('login_method', 'google');
+      this.token.set(responseData.token);
+    }
   }
 
   async logout(): Promise<void> {
-    await this.fetchAndHandle(
-      'https://nexus-astralis.up.railway.app/api/Account/Logout',
-      { method: 'POST', credentials: 'include' }
-    );
+    try {
+      await fetch(
+        'http://localhost:8080/api/Account/Logout',
+        { method: 'POST', credentials: 'include' }
+      );
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
     const loginMethod = sessionStorage.getItem('login_method');
     if (loginMethod === 'google') {
       this.authGoogle.signOut();
     }
+    sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('login_method');
-    sessionStorage.clear();
     this.token.set(null);
     this.user.set(null);
     this.profileImage.set('');

@@ -131,6 +131,27 @@
                                             }
                                         </mat-form-field>
 
+                                        <div class="profile-image-upload">
+                                            <label for="profileImageInput" class="upload-label">
+                                                Foto de perfil
+                                            </label>
+                                            <input 
+                                                type="file" 
+                                                id="profileImageInput"
+                                                accept="image/*"
+                                                (change)="onProfileImageSelected($event)"
+                                                #profileImageFile
+                                                class="file-input">
+                                            @if (profileImagePreview()) {
+                                                <div class="image-preview">
+                                                    <img [src]="profileImagePreview()" alt="Preview" class="preview-image">
+                                                    <button type="button" (click)="clearProfileImage()" class="clear-button">
+                                                        <mat-icon>close</mat-icon>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+
                                         <mat-checkbox formControlName="publicProfile">
                                             Perfil público
                                         </mat-checkbox>

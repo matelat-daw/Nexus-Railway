@@ -45,6 +45,8 @@ export class ProfileComponent {
   loading = signal(true);
   user = signal<User | null>(null);
   profileImage = signal('');
+  profileImagePreview = signal<string | null>(null);
+  selectedProfileImageFile = signal<File | null>(null);
   favorites = signal<Constellation[] | null>(null);
   comments = signal<Comments[] | null>(null);
   errorMessage = signal('');
@@ -63,6 +65,7 @@ export class ProfileComponent {
     userLocation: [],
     about: [],
     bday: [],
+    profileImage: [],
     global: []
   });
 
@@ -84,7 +87,14 @@ export class ProfileComponent {
     try {
       const user = await this.usersService.getMyProfile();
       this.user.set(user);
-      this.profileImage.set(user.profileImage);
+      
+      // Asegurarse de que la imagen de perfil apunte al backend si es una ruta relativa
+      let imageUrl = user.profileImage || '';
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        // Asumiendo que el backend está en el puerto 8080
+        imageUrl = `http://localhost:8080${imageUrl}`;
+      }
+      this.profileImage.set(imageUrl);
     } finally {
       this.loading.set(false);
     }
@@ -194,6 +204,7 @@ export class ProfileComponent {
       userLocation: [],
       about: [],
       bday: [],
+      profileImage: [],
       global: []
     });
   }
@@ -207,17 +218,25 @@ export class ProfileComponent {
         return;
       }
       
+      // Si hay una imagen seleccionada, agregarla al usuario
+      if (this.selectedProfileImageFile()) {
+        (this.editingUser() as any).profileImageFile = this.selectedProfileImageFile();
+      }
+      
       // Llamada al servicio para actualizar el perfil
-      const success = await this.usersService.editProfile(this.editingUser()!);
+      const success = await this.usersService.editProfile(this.editingUser()!, this.selectedProfileImageFile());
       
       if (success) {
         this.snackBar.open('Perfil actualizado correctamente', 'Cerrar', {
           duration: 3000
         });
         
-        this.user.set(this.editingUser());
+        // Recargar el perfil desde el servidor para obtener los datos actualizados
+        await this.onLoginSuccess();
+        
         this.editMode.set(false);
         this.editingUser.set(null);
+        this.clearProfileImage();
       } else {
         throw new Error('No se pudo actualizar el perfil');
       }
@@ -301,5 +320,46 @@ export class ProfileComponent {
 
   navigateToConstellation(constellationId: number): void {
     this.router.navigate(['/constellation', constellationId]);
+  }
+
+  onProfileImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        this.errorMessage.set('Por favor selecciona una imagen válida');
+        return;
+      }
+      
+      // Validar tamaño (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        this.errorMessage.set('La imagen no puede exceder 5MB');
+        return;
+      }
+      
+      // Guardar archivo
+      this.selectedProfileImageFile.set(file);
+      
+      // Crear preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.profileImagePreview.set(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  clearProfileImage(): void {
+    this.selectedProfileImageFile.set(null);
+    this.profileImagePreview.set(null);
+    
+    // Limpiar input
+    const fileInput = document.getElementById('profileImageInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   }
 }

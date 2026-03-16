@@ -6,7 +6,7 @@ import { User } from '../../models/user';
 })
 export class UsersService {
 
-  private readonly API_URL = 'https://nexus-astralis.up.railway.app/api/Account'
+  private readonly API_URL = 'http://localhost:8080/api/Account'
 
   token = signal<string | null>(sessionStorage.getItem('auth_token'));
 
@@ -22,7 +22,7 @@ export class UsersService {
   }
 
   async getInfoByNick(nick: string): Promise<User> {
-    const data = await fetch(`${this.API_URL}/GetUserInfo/${nick}`, {
+    const data = await fetch(`${this.API_URL}/GetUserInfo?nick=${nick}`, {
       method: 'GET',
       credentials: 'include'
     });
@@ -49,7 +49,7 @@ export class UsersService {
         constellationId: constellationId,
       };
       
-      const data = await fetch('https://nexus-astralis.up.railway.app/api/Account', {
+      const data = await fetch('http://localhost:8080/api/Account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -58,8 +58,7 @@ export class UsersService {
         credentials: 'include'
       });
       if (!data.ok) throw new Error(`Error fetching user comments: ${data.status}`);
-      const response = await data.text();
-      return response === 'true';
+      return true;
     } catch (error: any) {
       console.error('Error al añadir comentario:', error);
       throw error;
@@ -68,19 +67,18 @@ export class UsersService {
 
   async deleteComment(id: number): Promise<boolean> {
     try{
-      const data = await fetch(`https://nexus-astralis.up.railway.app/api/Comments/${id}`, {
+      const data = await fetch(`http://localhost:8080/api/Account/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       
       if (!data.ok) {
         const errorText = await data.text();
-        throw new Error(`Error actualizando perfil: ${errorText}`);
+        throw new Error(`Error eliminando comentario: ${errorText}`);
       }
-      const responseText = await data.text();
-      return responseText === "Datos Actualizados.";
+      return true;
     } catch (error: any) {
-      console.error('Error en la actualización del perfil:', error);
+      console.error('Error al eliminar comentario:', error);
       throw error;
     }
   }
@@ -90,9 +88,8 @@ export class UsersService {
       method: 'POST',
       credentials: 'include'
     });
-    if (!data.ok) throw new Error(`Error fetching user comments: ${data.status}`);
-    const response = await data.text();
-    return response === 'true';
+    if (!data.ok) throw new Error(`Error adding favorite: ${data.status}`);
+    return true;
   }
 
   async deleteFavorite(id: number): Promise<boolean> {
@@ -100,9 +97,8 @@ export class UsersService {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!data.ok) throw new Error(`Error fetching user comments: ${data.status}`);
-    const response = await data.text();
-    return response === 'true';
+    if (!data.ok) throw new Error(`Error deleting favorite: ${data.status}`);
+    return true;
   }
 
   async isMyFavorite(id: number): Promise<boolean> {
@@ -110,41 +106,56 @@ export class UsersService {
       method: 'GET',
       credentials: 'include'
     });
-    if (!data.ok) throw new Error(`Error fetching user favorite: ${data.status}`);
+    if (!data.ok) throw new Error(`Error checking favorite: ${data.status}`);
     const response = await data.text();
     return response === 'true';
   }
 
-  async editProfile(profile: User): Promise<boolean> {
-    if (!profile.name || !profile.nick || !profile.email || !profile.surname1) {
-      throw new Error('Faltan campos obligatorios: nombre, nick, email o apellido');
-    }
+  async editProfile(profile: User, profileImageFile?: File | null): Promise<boolean> {
     const formData = new FormData();
-    formData.append('Name', profile.name);
     formData.append('Nick', profile.nick);
     formData.append('Email', profile.email);
+    formData.append('Name', profile.name);
     formData.append('Surname1', profile.surname1);
     if (profile.surname2) formData.append('Surname2', profile.surname2);
     if (profile.phoneNumber) formData.append('PhoneNumber', profile.phoneNumber.toString());
     if (profile.userLocation) formData.append('UserLocation', profile.userLocation);
     if (profile.about) formData.append('About', profile.about);
-    if (profile.bday) formData.append('Bday', new Date(profile.bday).toLocaleDateString());
-    formData.append('PublicProfile', profile.publicProfile === true ? "1" : "0");
     
+    if (profile.bday) {
+      try {
+        // Convertir a formato ISO yyyy-MM-dd
+        const bdayDate = new Date(profile.bday);
+        if (!isNaN(bdayDate.getTime())) {
+          const isoDate = bdayDate.toISOString().split('T')[0];
+          formData.append('Bday', isoDate);
+        }
+      } catch (e) {
+        console.warn('Error al formatear la fecha de nacimiento:', e);
+      }
+    }
+    
+    if (profileImageFile) {
+      formData.append('ProfileImage', profileImageFile);
+    }
+    
+    formData.append('PublicProfile', profile.publicProfile === true ? "1" : "0");
+
     try {
       const response = await fetch(`${this.API_URL}/Update`, {
-        method: 'PATCH',
+        method: 'POST',
         body: formData,
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`${errorText}`);
+        throw new Error(`Error actualizando perfil: ${errorText}`);
       }
       const responseText = await response.text();
       return responseText === "Datos Actualizados.";
     } catch (error: any) {
+      console.error('Error en la actualización del perfil:', error);
       throw error;
     }
   }
