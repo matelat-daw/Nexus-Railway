@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { API_CONFIG } from '../../config/api.config';
 import { User } from '../../models/user';
 
 @Injectable({
@@ -6,14 +7,12 @@ import { User } from '../../models/user';
 })
 export class UsersService {
 
-  private readonly API_URL = 'http://localhost:8080/api/Account'
-
   token = signal<string | null>(sessionStorage.getItem('auth_token'));
 
   constructor() { }
 
   async getAll(): Promise<User[]> {
-    const data = await fetch(`${this.API_URL}/GetUsers`, {
+    const data = await fetch(API_CONFIG.ACCOUNT.GET_USERS, {
       method: 'GET',
       credentials: 'include'
     });
@@ -22,7 +21,7 @@ export class UsersService {
   }
 
   async getInfoByNick(nick: string): Promise<User> {
-    const data = await fetch(`${this.API_URL}/GetUserInfo?nick=${nick}`, {
+    const data = await fetch(`${API_CONFIG.ACCOUNT.GET_USER_INFO}?nick=${nick}`, {
       method: 'GET',
       credentials: 'include'
     });
@@ -31,7 +30,7 @@ export class UsersService {
   }
 
   async getMyProfile(): Promise<User> {
-    const data = await fetch(`${this.API_URL}/Profile`, {
+    const data = await fetch(API_CONFIG.ACCOUNT.PROFILE, {
       method: 'GET',
       credentials: 'include'
     });
@@ -49,7 +48,7 @@ export class UsersService {
         constellationId: constellationId,
       };
       
-      const data = await fetch('http://localhost:8080/api/Account', {
+      const data = await fetch(API_CONFIG.ACCOUNT.BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -67,7 +66,7 @@ export class UsersService {
 
   async deleteComment(id: number): Promise<boolean> {
     try{
-      const data = await fetch(`http://localhost:8080/api/Account/${id}`, {
+      const data = await fetch(`${API_CONFIG.ACCOUNT.BASE}/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -84,7 +83,7 @@ export class UsersService {
   }
 
   async addFavorite(id: number): Promise<boolean> {
-    const data = await fetch(`${this.API_URL}/Favorites/${id}`, {
+    const data = await fetch(`${API_CONFIG.ACCOUNT.FAVORITES}/${id}`, {
       method: 'POST',
       credentials: 'include'
     });
@@ -93,7 +92,7 @@ export class UsersService {
   }
 
   async deleteFavorite(id: number): Promise<boolean> {
-    const data = await fetch(`${this.API_URL}/Favorites/${id}`, {
+    const data = await fetch(`${API_CONFIG.ACCOUNT.FAVORITES}/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -142,7 +141,7 @@ export class UsersService {
     formData.append('PublicProfile', profile.publicProfile === true ? "1" : "0");
 
     try {
-      const response = await fetch(`${this.API_URL}/Update`, {
+      const response = await fetch(API_CONFIG.ACCOUNT.UPDATE, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -161,7 +160,7 @@ export class UsersService {
   }
 
   async deleteMyAccount(): Promise<void> {
-    const response = await fetch(`${this.API_URL}/Delete`, {
+    const response = await fetch(API_CONFIG.ACCOUNT.DELETE, {
       method: 'DELETE',
       credentials: 'include'
     });

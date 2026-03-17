@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { API_CONFIG } from '../../config/api.config';
 import { Star } from '../../models/star';
 
 @Injectable({
@@ -6,18 +7,16 @@ import { Star } from '../../models/star';
 })
 export class StarsService {
 
-  private readonly API_URL = 'http://localhost:8080/api/Stars'
-
   constructor() { }
 
   async getAll(): Promise<Star[]> {
-    const data = await fetch(this.API_URL);
+    const data = await fetch(API_CONFIG.STARS.GET_ALL);
     if (!data.ok) throw new Error(`Error fetching stars: ${data.status}`);
     return data.json();
   }
 
   async getById(id: number): Promise<Star> {
-    const data = await fetch(`${this.API_URL}/${id}`);
+    const data = await fetch(API_CONFIG.STARS.GET_BY_ID(id));
     if (!data.ok) throw new Error(`Error fetching star ${id}: ${data.status}`);
     return data.json();
   }

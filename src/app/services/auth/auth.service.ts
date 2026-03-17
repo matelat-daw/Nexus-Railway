@@ -1,11 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
+import { API_CONFIG } from '../../config/api.config';
 import { User } from '../../models/user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   constructor(private authGoogle: SocialAuthService) {}
-  private API_URL = 'http://localhost:8080/api/Auth';
   private passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}$/;
   private emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -68,7 +68,7 @@ export class AuthService {
     if (!password2 || password !== password2) errors.push('password2: Las contraseñas no coinciden.');
     if (errors.length > 0) this.handleErrors(errors);
     return await this.fetchAndHandle(
-      `${this.API_URL}/Register`,
+      API_CONFIG.AUTH.REGISTER,
       { method: 'POST', body: formData },
       { 'Nick': 'nick: El nombre de usuario ya está registrado.', 'E-mail': 'email: El email ya está registrado.' }
     );
@@ -82,7 +82,7 @@ export class AuthService {
     if (errors.length > 0) this.handleErrors(errors);
     
     const response = await fetch(
-      `${this.API_URL}/Login`,
+      API_CONFIG.AUTH.LOGIN,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }), credentials: 'include' }
     );
     
@@ -101,7 +101,7 @@ export class AuthService {
 
   async googleLogin(token: string): Promise<void> {
     const response = await fetch(
-      `${this.API_URL}/GoogleLogin`,
+      API_CONFIG.AUTH.GOOGLE_LOGIN,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ token }) }
     );
     
@@ -121,7 +121,7 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       await fetch(
-        'http://localhost:8080/api/Account/Logout',
+        API_CONFIG.ACCOUNT.LOGOUT,
         { method: 'POST', credentials: 'include' }
       );
     } catch (error) {
