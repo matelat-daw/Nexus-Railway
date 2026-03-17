@@ -101,7 +101,7 @@ export class UsersService {
   }
 
   async isMyFavorite(id: number): Promise<boolean> {
-    const data = await fetch(`${this.API_URL}/Favorites/${id}`, {
+    const data = await fetch(`${API_CONFIG.ACCOUNT.FAVORITES}/${id}`, {
       method: 'GET',
       credentials: 'include'
     });
